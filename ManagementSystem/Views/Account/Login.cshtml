@@ -1,0 +1,47 @@
+﻿@model Application.User.LoginRequest
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<h2 class="text-center">Login</h2>
+
+<form asp-action="Login" method="post" class="w-50 mx-auto mt-4" id="loginForm">
+    <div class="form-group mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Password" class="form-label"></label>
+        <input asp-for="Password" class="form-control" type="password" />
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">Login</button>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success mt-3">@TempData["SuccessMessage"]</div>
+    }
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger mt-3">
+            @foreach (var modelError in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <div>@modelError.ErrorMessage</div>
+            }
+        </div>
+    }
+</form>
+
+<!-- Add the Register Button Here -->
+<div class="text-center mt-3">
+    <a href="@Url.Action("Register", "Account")" class="btn btn-outline-secondary">Create an Account</a>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

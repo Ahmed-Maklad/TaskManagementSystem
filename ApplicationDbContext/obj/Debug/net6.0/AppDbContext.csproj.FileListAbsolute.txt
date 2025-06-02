@@ -1,0 +1,17 @@
+D:\ManagementSystem\ApplicationDbContext\obj\Debug\net6.0\AppDbContext.csproj.AssemblyReference.cache
+D:\ManagementSystem\ApplicationDbContext\obj\Debug\net6.0\AppDbContext.GeneratedMSBuildEditorConfig.editorconfig
+D:\ManagementSystem\ApplicationDbContext\obj\Debug\net6.0\AppDbContext.AssemblyInfoInputs.cache
+D:\ManagementSystem\ApplicationDbContext\obj\Debug\net6.0\AppDbContext.AssemblyInfo.cs
+D:\ManagementSystem\ApplicationDbContext\obj\Debug\net6.0\AppDbContext.csproj.CoreCompileInputs.cache
+D:\ManagementSystem\ApplicationDbContext\bin\Debug\net6.0\AppDbContext.deps.json
+D:\ManagementSystem\ApplicationDbContext\bin\Debug\net6.0\AppDbContext.runtimeconfig.json
+D:\ManagementSystem\ApplicationDbContext\bin\Debug\net6.0\AppDbContext.dll
+D:\ManagementSystem\ApplicationDbContext\bin\Debug\net6.0\AppDbContext.pdb
+D:\ManagementSystem\ApplicationDbContext\bin\Debug\net6.0\Domain.dll
+D:\ManagementSystem\ApplicationDbContext\bin\Debug\net6.0\Domain.pdb
+D:\ManagementSystem\ApplicationDbContext\obj\Debug\net6.0\AppDbCon.7D6897F8.Up2Date
+D:\ManagementSystem\ApplicationDbContext\obj\Debug\net6.0\AppDbContext.dll
+D:\ManagementSystem\ApplicationDbContext\obj\Debug\net6.0\refint\AppDbContext.dll
+D:\ManagementSystem\ApplicationDbContext\obj\Debug\net6.0\AppDbContext.pdb
+D:\ManagementSystem\ApplicationDbContext\obj\Debug\net6.0\AppDbContext.genruntimeconfig.cache
+D:\ManagementSystem\ApplicationDbContext\obj\Debug\net6.0\ref\AppDbContext.dll
