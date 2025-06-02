@@ -1,0 +1,14 @@
+# Ignore build output folders
+bin/
+obj/
+
+# Ignore Visual Studio files
+.vs/
+
+# Ignore DLL and PDB files 
+*.dll
+*.pdb
+
+# User-specific files
+*.user
+*.suo
