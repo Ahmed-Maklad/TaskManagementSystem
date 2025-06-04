@@ -1,4 +1,5 @@
 ﻿using Application.DTOs;
+using Ardalis.Specification;
 using Ardalis.Specification.EntityFrameworkCore;
 using Domain.Contracts;
 using Domain.Entities;
@@ -79,6 +80,14 @@ namespace Application.Query
         }
 
 
+    }
+    public class FilterTasksWithIncludesSpecification : Specification<UserTask>
+    {
+        public FilterTasksWithIncludesSpecification(Priority priority)
+        {
+            Query.Where(task => task.PriorityType == priority);
+            Query.Include(task => task.AssignedUser);
+        }
     }
 
 

@@ -1,13 +1,14 @@
 ﻿using Domain.Contracts;
+using Domain.ViewModels;
 using MediatR;
 
 namespace Application.Command.Delete
 {
-    public class DeleteTaskRequest : IRequest<ResultViewView<string>>
+    public class DeleteTaskRequest : IRequest<ResultView<string>>
     {
         public int TaskId { get; set; }
     }
-    public class DeleteTaskRequestHandler : IRequestHandler<DeleteTaskRequest, ResultViewView<string>>
+    public class DeleteTaskRequestHandler : IRequestHandler<DeleteTaskRequest, ResultView<string>>
     {
         private readonly IUnitOfWork _unitOfWork;
 
@@ -16,9 +17,9 @@ namespace Application.Command.Delete
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<ResultViewView<string>> Handle(DeleteTaskRequest request, CancellationToken cancellationToken)
+        public async Task<ResultView<string>> Handle(DeleteTaskRequest request, CancellationToken cancellationToken)
         {
-            var ResultView = new ResultViewView<string>();
+            var ResultView = new ResultView<string>();
 
             try
             {
