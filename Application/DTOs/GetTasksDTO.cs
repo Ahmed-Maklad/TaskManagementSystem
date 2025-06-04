@@ -7,7 +7,7 @@ namespace Application.DTOs
         public int Id { get; set; }
         public string? Name { get; set; }
         public string? Description { get; set; }
-        public Periority Priority { get; set; }
+        public Priority? PriorityType { get; set; }
         public DateTime DueDate { get; set; }
         public string? AssignedUserId { get; set; }
 

@@ -1,0 +1,54 @@
+﻿@using Domain.Enum
+@model UpdateTaskViewModel
+
+@{
+	ViewData["Title"] = "Update Task";
+}
+
+<h2>Update Task</h2>
+
+<form asp-action="Update" method="post">
+	@Html.AntiForgeryToken()
+	<input type="hidden" asp-for="Id" />
+
+	<div class="mb-3">
+		<label asp-for="Name" class="form-label"></label>
+		<input asp-for="Name" class="form-control" />
+		<span asp-validation-for="Name" class="text-danger"></span>
+	</div>
+
+	<div class="mb-3">
+		<label asp-for="Description" class="form-label"></label>
+		<textarea asp-for="Description" class="form-control"></textarea>
+		<span asp-validation-for="Description" class="text-danger"></span>
+	</div>
+
+	<div class="mb-3">
+		<label asp-for="PriorityType" class="form-label"></label>
+		<select asp-for="PriorityType" class="form-select"
+				asp-items="Html.GetEnumSelectList<Priority>()">
+			<option value="">-- Select Priority --</option>
+		</select>
+		<span asp-validation-for="PriorityType" class="text-danger"></span>
+	</div>
+
+
+	<div class="mb-3">
+		<label asp-for="DueDate" class="form-label"></label>
+		<input asp-for="DueDate" class="form-control" type="date" />
+		<span asp-validation-for="DueDate" class="text-danger"></span>
+	</div>
+
+	<div class="mb-3">
+		<label asp-for="AssignedUserId" class="form-label">Assign To</label>
+		<select asp-for="AssignedUserId" asp-items="ViewBag.Users" class="form-select"></select>
+		<span asp-validation-for="AssignedUserId" class="text-danger"></span>
+	</div>
+
+	<button type="submit" class="btn btn-primary">Update</button>
+	<a asp-action="GetAllTasks" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+			<partial name="_ValidationScriptsPartial" />
+}

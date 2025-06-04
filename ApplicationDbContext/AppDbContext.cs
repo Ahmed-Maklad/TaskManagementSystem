@@ -57,7 +57,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<int>
             entity.Property(e => e.Description)
                 .HasMaxLength(1000);
 
-            entity.Property(e => e.Priority)
+            entity.Property(e => e.PriorityType)
                 .IsRequired();
 
             entity.Property(e => e.DueDate)
@@ -71,7 +71,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<int>
                 .HasForeignKey(e => e.AssignedUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasIndex(e => e.Priority)
+            entity.HasIndex(e => e.PriorityType)
                 .HasDatabaseName("UserTask_Priority")
                 .IsUnique(false)
                 .IsClustered(false);

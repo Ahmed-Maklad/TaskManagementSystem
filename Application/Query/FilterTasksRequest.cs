@@ -5,14 +5,19 @@ using Domain.Contracts;
 using Domain.Entities;
 using Domain.Enum;
 using Domain.ViewModels;
+using Infrastructure.Spesification;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Query
 {
     public class FilterTasksRequest : IRequest<ResultView<List<GetTasksDTO>>>
     {
-        public Periority? PeriorityType { get; set; }
+        public Priority? PeriorityType { get; set; }
+        public int PageNumber { get; set; }
+        public int PageSize { get; set; }
     }
+
     public class FilterTaskRequestHandler : IRequestHandler<FilterTasksRequest, ResultView<List<GetTasksDTO>>>
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -22,51 +27,63 @@ namespace Application.Query
 
         public async Task<ResultView<List<GetTasksDTO>>> Handle(FilterTasksRequest request, CancellationToken cancellationToken)
         {
-            var resultView = new ResultView<List<GetTasksDTO>>();
+            var ResultView = new ResultView<List<GetTasksDTO>>();
 
-            if (request == null)
+            try
             {
-                resultView.IsSuccess = false;
-                resultView.Msg = "Please Select Periority Level From Drop List";
-                resultView.Data = null;
-                return resultView;
+                if (request == null)
+                {
+                    ResultView.IsSuccess = false;
+                    ResultView.Msg = "Please Select Periority Level From Drop List";
+                    ResultView.Data = null;
+                    return ResultView;
+                }
+
+                var spec = new FilterTasksWithIncludesSpecification(request.PeriorityType.Value);
+
+                var TasksUserFilter = (await _unitOfWork.UserTasks.GetAllAsync()).AsTracking();
+
+                var tasks = SpecificationEvaluator.Default.GetQuery(TasksUserFilter, spec);
+
+                if (tasks == null || !tasks.Any())
+                {
+                    ResultView.IsSuccess = false;
+                    ResultView.Msg = "No Tasks Found With Selected Filters.";
+                    ResultView.Data = new List<GetTasksDTO>();
+                    return ResultView;
+                }
+
+                ResultView.Data = (await PaginationSpec.ToPaginateResponseAsync(tasks, request?.PageNumber, request?.PageSize))
+                    .Select(t => new GetTasksDTO
+                    {
+                        Id = t.Id,
+                        Name = t.Name,
+                        Description = t.Description,
+                        PriorityType = t.PriorityType,
+                        DueDate = t.DueDate,
+                        AssignedUserId = t.AssignedUserId.ToString(),
+                        AssignedFullName = t.AssignedUser.FullName,
+                    }).ToList();
+
+                ResultView.IsSuccess = true;
+                ResultView.Msg = "Tasks fetched successfully.";
+            }
+            catch (Exception ex)
+            {
+                ResultView.IsSuccess = false;
+                ResultView.Msg = $"An error occurred: {ex.Message}";
+                ResultView.Data = null;
             }
 
-            var spec = new FilterTasksWithIncludesSpecification(request.PeriorityType.Value);
-
-            var TasksUserFilter = await _unitOfWork.UserTasks.GetAllAsync();
-
-            var tasks = SpecificationEvaluator.Default.GetQuery(TasksUserFilter, spec);
-
-            if (tasks == null || !tasks.Any())
-            {
-                resultView.IsSuccess = false;
-                resultView.Msg = "No Tasks Found With Selected Filters.";
-                resultView.Data = new List<GetTasksDTO>();
-                return resultView;
-            }
-
-            resultView.Data = tasks.Select(task => new GetTasksDTO
-            {
-                Id = task.Id,
-                Name = task.Name,
-                Description = task.Description,
-                Priority = task.Priority,
-                AssignedFullName = task.AssignedUser.FullName,
-                DueDate = task.DueDate,
-                AssignedUserId = task.AssignedUserId.ToString()
-            }).ToList();
-
-            resultView.IsSuccess = true;
-            resultView.Msg = "Tasks fetched successfully.";
-            return resultView;
+            return ResultView;
         }
     }
+
     public class FilterTasksWithIncludesSpecification : Specification<UserTask>
     {
-        public FilterTasksWithIncludesSpecification(Periority priority)
+        public FilterTasksWithIncludesSpecification(Priority priority)
         {
-            Query.Where(task => task.Priority == priority);
+            Query.Where(task => task.PriorityType == priority);
             Query.Include(task => task.AssignedUser);
         }
     }

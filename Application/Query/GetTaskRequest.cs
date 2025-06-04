@@ -20,36 +20,45 @@ namespace Application.Query
 
         public async Task<ResultView<GetTasksDTO>> Handle(GetTaskRequest request, CancellationToken cancellationToken)
         {
-            var userTask = (await _unitOfWork.UserTasks.GetAllAsync()).FirstOrDefault(P => P.Id == request.TaskId);
+            ResultView<GetTasksDTO> ResultView = new();
 
-            if (userTask == null)
+            try
             {
-                return new ResultView<GetTasksDTO>
+                var UserTask = (await _unitOfWork.UserTasks.GetAllAsync()).FirstOrDefault(P => P.Id == request.TaskId);
+
+                if (UserTask == null)
                 {
-                    IsSuccess = false,
-                    Msg = "Task Not Exist.",
-                    Data = new GetTasksDTO()
+                    ResultView.IsSuccess = false;
+                    ResultView.Msg = "Task Not Exist.";
+                    ResultView.Data = new GetTasksDTO();
+                    return ResultView;
+                }
+
+                var TaskDto = new GetTasksDTO
+                {
+                    Id = UserTask.Id,
+                    Name = UserTask.Name,
+                    Description = UserTask.Description,
+                    PriorityType = UserTask.PriorityType,
+                    DueDate = UserTask.DueDate,
+                    AssignedUserId = UserTask.AssignedUserId.ToString(),
+                    AssignedFullName = UserTask.AssignedUser?.FullName
                 };
+
+                ResultView.IsSuccess = true;
+                ResultView.Msg = "Task retrieved successfully.";
+                ResultView.Data = TaskDto;
+            }
+            catch (Exception ex)
+            {
+                ResultView.IsSuccess = false;
+                ResultView.Msg = $"An error occurred: {ex.Message}";
+                ResultView.Data = null;
             }
 
-            var taskDto = new GetTasksDTO
-            {
-                Id = userTask.Id,
-                Name = userTask.Name,
-                Description = userTask.Description,
-                Priority = userTask.Priority,
-                DueDate = userTask.DueDate,
-                AssignedUserId = userTask.AssignedUserId.ToString(),
-                AssignedFullName = userTask.AssignedUser?.FullName
-            };
-
-            return new ResultView<GetTasksDTO>
-            {
-                IsSuccess = true,
-                Msg = "Task retrieved successfully.",
-                Data = taskDto
-            };
+            return ResultView;
         }
+
     }
 
 }

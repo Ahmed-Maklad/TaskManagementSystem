@@ -26,51 +26,60 @@ namespace Application.Command.UserCommand
 
         public async Task<ResultView<string>> Handle(RegisterUserRequest request, CancellationToken cancellationToken)
         {
-            ResultView<string> resultView = new();
+            ResultView<string> ResultView = new();
 
-            var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-
-            if (!validationResult.IsValid)
+            try
             {
-                // If validation fails, join all error messages and add them to Msg
-                resultView.Msg = string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage));
-                return resultView;
+                var ValidationResult = await _validator.ValidateAsync(request, cancellationToken);
+
+                if (!ValidationResult.IsValid)
+                {
+                    ResultView.Msg = string.Join(", ", ValidationResult.Errors.Select(e => e.ErrorMessage));
+                    return ResultView;
+                }
+
+                var UserName = request.Email.Split('@')[0];
+
+                if (await _userManager.Users.AnyAsync(u => u.UserName == UserName || u.Email == request.Email, cancellationToken))
+                {
+                    ResultView.IsSuccess = false;
+                    ResultView.Data = null;
+                    ResultView.Msg = "Username or Email already exists.";
+                    return ResultView;
+                }
+
+                var user = new ApplicationUser
+                {
+                    FullName = request.FullName,
+                    Email = request.Email,
+                    UserName = UserName
+                };
+
+                var createResult = await _userManager.CreateAsync(user, request.Password);
+
+                if (!createResult.Succeeded)
+                {
+                    ResultView.IsSuccess = false;
+                    ResultView.Data = null;
+                    ResultView.Msg = string.Join(", ", createResult.Errors.Select(e => e.Description));
+                    return ResultView;
+                }
+
+                await _userManager.AddToRoleAsync(user, "User");
+
+                ResultView.IsSuccess = true;
+                ResultView.Msg = "User registered successfully.";
+            }
+            catch (Exception ex)
+            {
+                ResultView.IsSuccess = false;
+                ResultView.Msg = $"An error occurred: {ex.Message}";
+                ResultView.Data = null;
             }
 
-            var userName = request.Email.Split('@')[0];
-
-            if (await _userManager.Users.AnyAsync(u => u.UserName == userName || u.Email == request.Email, cancellationToken))
-            {
-                resultView.IsSuccess = false;
-                resultView.Data = null;
-                resultView.Msg = "Username or Email already exists.";
-                return resultView;
-            }
-
-            var user = new ApplicationUser
-            {
-                FullName = request.FullName,
-                Email = request.Email,
-                UserName = userName
-            };
-
-            var createResult = await _userManager.CreateAsync(user, request.Password);
-
-            if (!createResult.Succeeded)
-            {
-                resultView.IsSuccess = false;
-                resultView.Data = null;
-                resultView.Msg = string.Join(", ", createResult.Errors.Select(e => e.Description));
-                return resultView;
-            }
-
-            await _userManager.AddToRoleAsync(user, "User");
-
-            resultView.IsSuccess = true;
-            resultView.Msg = "User registered successfully.";
-
-            return resultView;
+            return ResultView;
         }
+
     }
 
     public class RegisterUserRequestValidator : AbstractValidator<RegisterUserRequest>

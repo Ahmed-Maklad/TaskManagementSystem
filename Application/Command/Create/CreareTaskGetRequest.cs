@@ -5,6 +5,7 @@ using ManagementSystem.Models;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.Command.Create
@@ -26,45 +27,57 @@ namespace Application.Command.Create
 
         public async Task<ResultView<CreateTaskViewModel>> Handle(CreareTaskGetRequest request, CancellationToken cancellationToken)
         {
-            ResultView<CreateTaskViewModel> resultView = new();
-            var currentUserId = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            ResultView<CreateTaskViewModel> ResultView = new();
 
-            if (string.IsNullOrEmpty(currentUserId))
+            try
             {
-                resultView.IsSuccess = false;
-                resultView.Data = null;
-                resultView.Msg = "User Not Authinticated";
-                return resultView;
-            }
+                var CurrentUserId = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            var currentUser = await _userManager.FindByIdAsync(currentUserId);
-
-            if (currentUser == null)
-            {
-                resultView.IsSuccess = false;
-                resultView.Data = null;
-                resultView.Msg = "User Not Exist";
-                return resultView;
-            }
-
-            var roles = await _userManager.GetRolesAsync(currentUser);
-            var IsAdmin = roles.Contains("Admin");
-            resultView.IsSuccess = true;
-            resultView.Msg = "User Exist True..";
-            resultView.Data = new CreateTaskViewModel
-            {
-                DueDate = DateTime.Today.AddDays(1),
-                IsAdmin = IsAdmin,
-                AssignedUserId = IsAdmin ? null : currentUserId,
-                Users = IsAdmin ? await _userManager.Users.Select(u => new SelectListItem
+                if (string.IsNullOrEmpty(CurrentUserId))
                 {
-                    Value = u.Id.ToString(),
-                    Text = u.UserName
-                }).ToListAsync() : new List<SelectListItem>()
-            };
+                    ResultView.IsSuccess = false;
+                    ResultView.Data = null;
+                    ResultView.Msg = "User Not Authenticated";
+                    return ResultView;
+                }
 
-            return resultView;
+                var CurrentUser = await _userManager.FindByIdAsync(CurrentUserId);
+
+                if (CurrentUser == null)
+                {
+                    ResultView.IsSuccess = false;
+                    ResultView.Data = null;
+                    ResultView.Msg = "User Not Exist";
+                    return ResultView;
+                }
+
+                var roles = await _userManager.GetRolesAsync(CurrentUser);
+                var isAdmin = roles.Contains("Admin");
+
+                ResultView.IsSuccess = true;
+                ResultView.Msg = "User Exists True..";
+                ResultView.Data = new CreateTaskViewModel
+                {
+                    DueDate = DateTime.Today.AddDays(1),
+                    IsAdmin = isAdmin,
+                    AssignedUserId = isAdmin ? null : CurrentUserId,
+                    Users = isAdmin ? await _userManager.Users.Select(u => new SelectListItem
+                    {
+                        Value = u.Id.ToString(),
+                        Text = u.UserName
+                    }).ToListAsync() : new List<SelectListItem>()
+                };
+            }
+            catch (Exception ex)
+            {
+                ResultView.IsSuccess = false;
+                ResultView.Msg = $"An error occurred: {ex.Message}";
+                ResultView.Data = null;
+            }
+
+            return ResultView;
         }
+
     }
 
 }

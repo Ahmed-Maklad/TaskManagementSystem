@@ -14,49 +14,62 @@ namespace Application.User
     public class LoginHandler : IRequestHandler<LoginRequest, ResultView<string>>
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly UserManager<ApplicationUser> _UserManager;
         private readonly IValidator<LoginRequest> _validator;
 
-        public LoginHandler(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, IValidator<LoginRequest> validator)
+        public LoginHandler(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> UserManager, IValidator<LoginRequest> validator)
         {
             _signInManager = signInManager;
-            _userManager = userManager;
+            _UserManager = UserManager;
             _validator = validator;
         }
 
         public async Task<ResultView<string>> Handle(LoginRequest request, CancellationToken cancellationToken)
         {
-            ResultView<string> resultView = new();
+            ResultView<string> ResultView = new();
 
-            var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-
-            if (!validationResult.IsValid)
+            try
             {
-                resultView.Msg = string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage));
-                return resultView;
+                var ValidationResult = await _validator.ValidateAsync(request, cancellationToken);
+
+                if (!ValidationResult.IsValid)
+                {
+                    ResultView.Msg = string.Join(", ", ValidationResult.Errors.Select(e => e.ErrorMessage));
+                    return ResultView;
+                }
+
+                var User = await _UserManager.FindByEmailAsync(request.Email);
+                if (User == null)
+                {
+                    ResultView.IsSuccess = false;
+                    ResultView.Data = null;
+                    ResultView.Msg = "Invalid Info Login Email Or Password..!";
+                    return ResultView;
+                }
+
+                var SignInResult = await _signInManager.PasswordSignInAsync(User.UserName, request.Password, false, false);
+
+                if (!SignInResult.Succeeded)
+                {
+                    ResultView.IsSuccess = false;
+                    ResultView.Data = null;
+                    ResultView.Msg = "Invalid Info Login Email Or Password..!";
+                    return ResultView;
+                }
+
+                ResultView.IsSuccess = true;
+                ResultView.Msg = "Login Successfull";
             }
-            var user = await _userManager.FindByEmailAsync(request.Email);
-            if (user == null)
+            catch (Exception ex)
             {
-                resultView.IsSuccess = false;
-                resultView.Data = null;
-                resultView.Msg = "Invalid Info Login Email Or Password..!";
-                return resultView;
+                ResultView.IsSuccess = false;
+                ResultView.Msg = $"An error occurred: {ex.Message}";
+                ResultView.Data = null;
             }
 
-            var signInResult = await _signInManager.PasswordSignInAsync(user.UserName, request.Password, false, false);
-
-            if (!signInResult.Succeeded)
-            {
-                resultView.IsSuccess = false;
-                resultView.Data = null;
-                resultView.Msg = "Invalid Info Login Email Or Password..!";
-                return resultView;
-            }
-            resultView.IsSuccess = true;
-            resultView.Msg = "Login Successfull";
-            return resultView;
+            return ResultView;
         }
+
         public class LoginRequestValidator : AbstractValidator<LoginRequest>
         {
             public LoginRequestValidator()

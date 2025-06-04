@@ -1,4 +1,5 @@
 ﻿using Domain.Enum;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace ManagementSystem.Models
 {
@@ -8,7 +9,7 @@ namespace ManagementSystem.Models
 
         public string Description { get; set; }
 
-        public Periority Priority { get; set; }
+        public Priority PriorityType { get; set; }
 
         public DateTime DueDate { get; set; }
 
@@ -18,9 +19,9 @@ namespace ManagementSystem.Models
 
         public List<SelectListItem>? Users { get; set; }
     }
-    public class SelectListItem
-    {
-        public string? Value { get; set; }
-        public string? Text { get; set; }
-    }
+    //public class SelectListItem
+    //{
+    //    public string? Value { get; set; }
+    //    public string? Text { get; set; }
+    //}
 }

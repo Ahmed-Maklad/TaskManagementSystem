@@ -6,6 +6,7 @@
 	int currentPage = (int)ViewData["CurrentPage"];
 	int pageSize = (int)ViewData["PageSize"];
 	int totalPages = (int)ViewData["TotalPages"];
+	var selectedPriority = ViewData["SelectedPriority"]?.ToString();
 }
 
 <h2 class="text-center">Task List</h2>
@@ -13,6 +14,34 @@
 <div class="text-end mb-3">
 	<a class="btn btn-success" asp-action="Create">Create Task</a>
 </div>
+<form id="filterForm" method="get" action="@Url.Action("GetAllTasks")">
+	<input type="hidden" name="PageNumber" value="@ViewData["CurrentPage"]" />
+	<input type="hidden" name="PageSize" value="@ViewData["PageSize"]" />
+	<div class="mb-3">
+		<label for="PriorityFilter" class="form-label">Filter by Priority</label>
+		<select id="PriorityFilter" name="Priority" class="form-select">
+			<option value="">-- Select Priority --</option>
+			<option value="Low">Low</option>
+			<option value="Medium">Medium</option>
+			<option value="High">High</option>
+		</select>
+
+	</div>
+</form>
+
+
+
+
+@if (TempData["Success"] != null)
+{
+	<div class="alert alert-success text-center">@TempData["Success"]</div>
+}
+
+@if (TempData["Error"] != null)
+{
+	<div class="alert alert-danger text-center">@TempData["Error"]</div>
+}
+
 @if (!Model.IsSuccess)
 {
 	<div class="alert alert-warning">
@@ -21,8 +50,6 @@
 }
 else if (Model.Data != null && Model.Data.Any())
 {
-
-
 	<table class="table table-bordered">
 		<thead class="table-light">
 			<tr>
@@ -40,15 +67,20 @@ else if (Model.Data != null && Model.Data.Any())
 				<tr>
 					<td>@task.Name</td>
 					<td>@task.Description</td>
-					<td>@task.Priority</td>
+					<td>@task.PriorityType</td>
 					<td>@task.DueDate.ToString("yyyy-MM-dd")</td>
 					<td>@task.AssignedFullName</td>
 					<td>
 						<a class="btn btn-sm btn-info" asp-action="Details" asp-route-id="@task.Id">Details</a>
 						@if (isAdmin)
 						{
-							<a class="btn btn-sm btn-warning" asp-action="Edit" asp-route-id="@task.Id">Edit</a>
-							<a class="btn btn-sm btn-danger" asp-action="Delete" asp-route-id="@task.Id">Delete</a>
+							<a class="btn btn-sm btn-warning" asp-action="Update" asp-route-id="@task.Id">Edit</a>
+							<a class="btn btn-sm btn-danger"
+							   asp-action="Delete"
+							   asp-route-id="@task.Id"
+							   onclick="return confirm('Are you sure you want to delete this task?');">
+								Delete
+							</a>
 						}
 					</td>
 				</tr>
@@ -97,4 +129,9 @@ else
 
 @section Scripts {
 	<partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById("PriorityFilter").addEventListener("change", function () {
+            document.getElementById("filterForm").submit();
+        });
+    </script>
 }

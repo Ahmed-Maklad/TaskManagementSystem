@@ -1,0 +1,25 @@
+﻿@model Application.DTOs.GetTasksDTO
+
+@{
+	ViewData["Title"] = "Task Details";
+}
+
+<h2 class="text-center">@Model.Name</h2>
+
+<div class="card">
+	<div class="card-body">
+		<h5 class="card-title">Task Information</h5>
+		<p class="card-text"><strong>Description:</strong> @Model.Description</p>
+		<p class="card-text"><strong>Priority:</strong> @Model.PriorityType</p>
+		<p class="card-text"><strong>Due Date:</strong> @Model.DueDate.ToString("yyyy-MM-dd")</p>
+		<p class="card-text"><strong>Assigned To:</strong> @Model.AssignedFullName</p>
+
+		<div class="text-end">
+			@if (User.IsInRole("Admin"))
+			{
+				<a href="@Url.Action("Update", "Task", new { id = Model.Id })" class="btn btn-warning">Edit</a>
+			}
+			<a href="@Url.Action("GetAllTasks", "Task")" class="btn btn-secondary">Back to List</a>
+		</div>
+	</div>
+</div>

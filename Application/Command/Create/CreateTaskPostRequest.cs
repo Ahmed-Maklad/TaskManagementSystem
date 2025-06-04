@@ -14,7 +14,7 @@ namespace Application.Command.Create
     {
         public string Name { get; set; }
         public string Description { get; set; }
-        public Periority Priority { get; set; }
+        public Priority PriorityType { get; set; }
         public DateTime DueDate { get; set; }
         public string AssignedUserId { get; set; }
     }
@@ -36,50 +36,59 @@ namespace Application.Command.Create
 
         public async Task<ResultView<string>> Handle(CreateTaskPostRequest request, CancellationToken cancellationToken)
         {
-            ResultView<string> resultView = new();
+            ResultView<string> ResultView = new();
 
-            var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-
-            if (!validationResult.IsValid)
+            try
             {
-                resultView.Msg = string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage));
-                return resultView;
+                var ValidationResult = await _validator.ValidateAsync(request, cancellationToken);
+                if (!ValidationResult.IsValid)
+                {
+                    ResultView.Msg = string.Join(", ", ValidationResult.Errors.Select(e => e.ErrorMessage));
+                    return ResultView;
+                }
+
+                var CurrentUserIdStr = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(CurrentUserIdStr))
+                {
+                    ResultView.IsSuccess = false;
+                    ResultView.Msg = "User is not authenticated.";
+                    return ResultView;
+                }
+
+                var CurrentUser = await _userManager.FindByIdAsync(CurrentUserIdStr);
+                if (CurrentUser == null)
+                {
+                    ResultView.IsSuccess = false;
+                    ResultView.Msg = "User not Exist.";
+                    return ResultView;
+                }
+
+                var task = new UserTask
+                {
+                    Name = request.Name,
+                    Description = request.Description,
+                    DueDate = request.DueDate,
+                    PriorityType = request.PriorityType,
+                    AssignedUserId = int.TryParse(request.AssignedUserId, out int Id) ? Id : CurrentUser.Id
+                };
+
+                await _unitOfWork.UserTasks.CreateAsync(task);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                ResultView.IsSuccess = true;
+                ResultView.Msg = "Task created successfully.";
+                ResultView.Data = task.Id.ToString();
+            }
+            catch (Exception ex)
+            {
+                ResultView.IsSuccess = false;
+                ResultView.Msg = $"An error occurred: {ex.Message}";
             }
 
-            var currentUserIdStr = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(currentUserIdStr))
-            {
-                resultView.IsSuccess = false;
-                resultView.Msg = "User is not authenticated.";
-                return resultView;
-            }
-
-            var currentUser = await _userManager.FindByIdAsync(currentUserIdStr);
-            if (currentUser == null)
-            {
-                resultView.IsSuccess = false;
-                resultView.Msg = "User not Exist.";
-                return resultView;
-            }
-
-            var task = new UserTask
-            {
-                Name = request.Name,
-                Description = request.Description,
-                DueDate = request.DueDate,
-                Priority = request.Priority,
-                AssignedUserId = int.TryParse(request.AssignedUserId, out int Id) ? Id : currentUser.Id
-            };
-
-            await _unitOfWork.UserTasks.CreateAsync(task);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            resultView.IsSuccess = true;
-            resultView.Msg = "Task created successfully.";
-            resultView.Data = task.Id.ToString();
-            return resultView;
+            return ResultView;
         }
     }
+
     public class CreateTaskPostRequestValidator : AbstractValidator<CreateTaskPostRequest>
     {
         public CreateTaskPostRequestValidator()
@@ -87,7 +96,7 @@ namespace Application.Command.Create
             RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
             RuleFor(x => x.Description).MaximumLength(1000);
             RuleFor(x => x.DueDate).GreaterThanOrEqualTo(DateTime.Today);
-            RuleFor(x => x.Priority).IsInEnum();
+            RuleFor(x => x.PriorityType).IsInEnum();
             RuleFor(x => x.AssignedUserId).NotNull().WithMessage("Assigned User is required.");
         }
     }

@@ -5,6 +5,7 @@ using ManagementSystem.Models;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.Command.Update
@@ -29,36 +30,48 @@ namespace Application.Command.Update
 
         public async Task<ResultView<UpdateTaskViewModel>> Handle(UpdateTaskGetRequest request, CancellationToken cancellationToken)
         {
-            ResultView<UpdateTaskViewModel> resultView = new();
-            var TaskBySearch = (await _UnitOfWork.UserTasks.GetAllAsync()).FirstOrDefault(P => P.Id == request.TaskId);
-            if (TaskBySearch is null)
-            {
-                resultView.Data = null;
-                resultView.IsSuccess = false;
-                resultView.Msg = "Task Not Exist Please Create This First";
-            }
-            var httpUser = _httpContextAccessor.HttpContext?.User;
-            var isAdmin = httpUser != null && httpUser.IsInRole("Admin");
+            ResultView<UpdateTaskViewModel> ResultView = new();
 
-            resultView.IsSuccess = true;
-            resultView.Msg = "Task Exist True";
-
-            resultView.Data = new UpdateTaskViewModel
+            try
             {
-                Id = TaskBySearch.Id,
-                Name = TaskBySearch.Name,
-                Description = TaskBySearch.Description,
-                Priority = TaskBySearch.Priority,
-                DueDate = TaskBySearch.DueDate,
-                AssignedUserId = TaskBySearch.AssignedUserId.ToString(),
-                Users = isAdmin ? await _userManager.Users.Select(u => new SelectListItem
+                var TaskBySearch = (await _UnitOfWork.UserTasks.GetAllAsync()).FirstOrDefault(P => P.Id == request.TaskId);
+                if (TaskBySearch is null)
                 {
-                    Value = u.Id.ToString(),
-                    Text = u.UserName
-                }).ToListAsync(cancellationToken) : null
-            };
+                    ResultView.Data = null;
+                    ResultView.IsSuccess = false;
+                    ResultView.Msg = "Task Not Exist Please Create This First";
+                    return ResultView;
+                }
 
-            return resultView;
+                var httpUser = _httpContextAccessor.HttpContext?.User;
+                var isAdmin = httpUser != null && httpUser.IsInRole("Admin");
+
+                ResultView.IsSuccess = true;
+                ResultView.Msg = "Task Exist True";
+
+                ResultView.Data = new UpdateTaskViewModel
+                {
+                    Id = TaskBySearch.Id,
+                    Name = TaskBySearch.Name,
+                    Description = TaskBySearch.Description,
+                    PriorityType = TaskBySearch.PriorityType,
+                    DueDate = TaskBySearch.DueDate,
+                    AssignedUserId = TaskBySearch.AssignedUserId.ToString(),
+                    Users = isAdmin ? await _userManager.Users.Select(u => new SelectListItem
+                    {
+                        Value = u.Id.ToString(),
+                        Text = u.UserName
+                    }).ToListAsync(cancellationToken) : null
+                };
+            }
+            catch (Exception ex)
+            {
+                ResultView.IsSuccess = false;
+                ResultView.Msg = $"An error occurred: {ex.Message}";
+            }
+
+            return ResultView;
         }
     }
+
 }
