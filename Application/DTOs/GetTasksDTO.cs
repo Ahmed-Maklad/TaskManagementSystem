@@ -11,7 +11,7 @@ namespace Application.DTOs
         public DateTime DueDate { get; set; }
         public string? AssignedUserId { get; set; }
 
-        public string? AssignedFullName { get; set; }
+        public string? AssignedUserFullName { get; set; }
     }
 
 }

@@ -12,7 +12,7 @@
 		<p class="card-text"><strong>Description:</strong> @Model.Description</p>
 		<p class="card-text"><strong>Priority:</strong> @Model.PriorityType</p>
 		<p class="card-text"><strong>Due Date:</strong> @Model.DueDate.ToString("yyyy-MM-dd")</p>
-		<p class="card-text"><strong>Assigned To:</strong> @Model.AssignedFullName</p>
+		<p class="card-text"><strong>Assigned To:</strong> @Model.AssignedUserFullName</p>
 
 		<div class="text-end">
 			@if (User.IsInRole("Admin"))

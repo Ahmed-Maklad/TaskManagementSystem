@@ -3,9 +3,9 @@
 @{
 	ViewData["Title"] = "Task List";
 	var isAdmin = User.IsInRole("Admin");
-	int currentPage = (int)ViewData["CurrentPage"];
-	int pageSize = (int)ViewData["PageSize"];
-	int totalPages = (int)ViewData["TotalPages"];
+	int currentPage = (int)(ViewData["CurrentPage"] ?? 1);
+	int pageSize = (int)(ViewData["PageSize"] ?? 10);
+	int totalPages = (int)(ViewData["TotalPages"] ?? 1);
 	var selectedPriority = ViewData["SelectedPriority"]?.ToString();
 }
 
@@ -69,7 +69,7 @@ else if (Model.Data != null && Model.Data.Any())
 					<td>@task.Description</td>
 					<td>@task.PriorityType</td>
 					<td>@task.DueDate.ToString("yyyy-MM-dd")</td>
-					<td>@task.AssignedFullName</td>
+					<td>@task.AssignedUserFullName</td>
 					<td>
 						<a class="btn btn-sm btn-info" asp-action="Details" asp-route-id="@task.Id">Details</a>
 						@if (isAdmin)
@@ -107,7 +107,7 @@ else if (Model.Data != null && Model.Data.Any())
 				<span class="page-link">@currentPage</span>
 			</li>
 
-			@if (currentPage < totalPages)
+			@if (currentPage < totalPages )
 			{
 				<li class="page-item">
 					<a class="page-link" href="@Url.Action("GetAllTasks", new { pageNumber = currentPage + 1 })">Next</a>

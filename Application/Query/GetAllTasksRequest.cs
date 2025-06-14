@@ -35,39 +35,23 @@ namespace Application.Query
 
             try
             {
-                IQueryable<GetTasksDTO> Tasks = (await _unitOfWork.UserTasks.GetAllAsync())
-                    .Include(t => t.AssignedUser)
-                    .AsNoTracking()
-                    .Select(t => new GetTasksDTO
-                    {
-                        Id = t.Id,
-                        Name = t.Name,
-                        Description = t.Description,
-                        PriorityType = t.PriorityType,
-                        DueDate = t.DueDate,
-                        AssignedUserId = t.AssignedUserId.ToString(),
-                        AssignedFullName = t.AssignedUser.FullName,
-                    });
+                var spec = new FilterTasksWithIncludesSpecification(request.PriorityType);
+                var userTasksQueryable = (await _unitOfWork.UserTasks.GetAllAsync()).AsNoTracking();
+                var filteredTasks = SpecificationEvaluator.Default.GetQuery(userTasksQueryable, spec);
 
-                if (request.PriorityType.HasValue)
+                var data = await PaginationSpec.ToPaginateResponseAsync(filteredTasks, request.PageNumber, request.PageSize);
+                if (data.Count > 0 || data is not null)
                 {
-                    var spec = new FilterTasksWithIncludesSpecification(request.PriorityType.Value);
-                    var TasksUserFilter = (await _unitOfWork.UserTasks.GetAllAsync()).AsNoTracking();
-                    Tasks = SpecificationEvaluator.Default.GetQuery(TasksUserFilter, spec).Select(t => new GetTasksDTO
-                    {
-                        Id = t.Id,
-                        Name = t.Name,
-                        Description = t.Description,
-                        PriorityType = t.PriorityType,
-                        DueDate = t.DueDate,
-                        AssignedUserId = t.AssignedUserId.ToString(),
-                        AssignedFullName = t.AssignedUser.FullName,
-                    });
+                    ResultView.Data = data;
+                    ResultView.IsSuccess = true;
+                    ResultView.Msg = "Data Fetched Successfully";
                 }
-
-                ResultView.Data = await PaginationSpec.ToPaginateResponseAsync(Tasks, request.PageNumber, request.PageSize);
-                ResultView.IsSuccess = true;
-                ResultView.Msg = "Data Fetched Successfully";
+                else
+                {
+                    ResultView.Data = null;
+                    ResultView.IsSuccess = false;
+                    ResultView.Msg = "Data Fetched Failed";
+                }
             }
             catch (Exception ex)
             {
@@ -78,17 +62,27 @@ namespace Application.Query
 
             return ResultView;
         }
-
-
     }
-    public class FilterTasksWithIncludesSpecification : Specification<UserTask>
+
+    public class FilterTasksWithIncludesSpecification : Specification<UserTask, GetTasksDTO>
     {
-        public FilterTasksWithIncludesSpecification(Priority priority)
+        public FilterTasksWithIncludesSpecification(Priority? priority)
         {
-            Query.Where(task => task.PriorityType == priority);
-            Query.Include(task => task.AssignedUser);
+            if (priority.HasValue)
+            {
+                Query.Where(task => task.PriorityType == priority.Value);
+            }
+
+            Query.Select(task => new GetTasksDTO
+            {
+                Id = task.Id,
+                Name = task.Name,
+                Description = task.Description,
+                PriorityType = task.PriorityType,
+                DueDate = task.DueDate,
+                AssignedUserId = task.AssignedUserId.ToString(),
+                AssignedUserFullName = task.AssignedUser != null ? task.AssignedUser.FullName : null,
+            });
         }
     }
-
-
 }

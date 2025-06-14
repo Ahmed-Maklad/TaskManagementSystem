@@ -1,7 +1,11 @@
 ﻿using Application.DTOs;
+using Ardalis.Specification;
+using Ardalis.Specification.EntityFrameworkCore;
 using Domain.Contracts;
+using Domain.Entities;
 using Domain.ViewModels;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Query
 {
@@ -24,30 +28,15 @@ namespace Application.Query
 
             try
             {
-                var UserTask = (await _unitOfWork.UserTasks.GetAllAsync()).FirstOrDefault(P => P.Id == request.TaskId);
+                var spec = new TaskByIdWithIncludesSpecification(request.TaskId);
 
-                if (UserTask == null)
-                {
-                    ResultView.IsSuccess = false;
-                    ResultView.Msg = "Task Not Exist.";
-                    ResultView.Data = new GetTasksDTO();
-                    return ResultView;
-                }
-
-                var TaskDto = new GetTasksDTO
-                {
-                    Id = UserTask.Id,
-                    Name = UserTask.Name,
-                    Description = UserTask.Description,
-                    PriorityType = UserTask.PriorityType,
-                    DueDate = UserTask.DueDate,
-                    AssignedUserId = UserTask.AssignedUserId.ToString(),
-                    AssignedFullName = UserTask.AssignedUser?.FullName
-                };
+                var userTasksIQuarable = (await _unitOfWork.UserTasks.GetAllAsync()).AsNoTracking();
+                var task = await SpecificationEvaluator.Default.GetQuery(userTasksIQuarable, spec)
+                    .FirstOrDefaultAsync(cancellationToken);
 
                 ResultView.IsSuccess = true;
                 ResultView.Msg = "Task retrieved successfully.";
-                ResultView.Data = TaskDto;
+                ResultView.Data = task;
             }
             catch (Exception ex)
             {
@@ -58,7 +47,25 @@ namespace Application.Query
 
             return ResultView;
         }
+    }
 
+    public class TaskByIdWithIncludesSpecification : Specification<UserTask, GetTasksDTO>
+    {
+        public TaskByIdWithIncludesSpecification(int taskId)
+        {
+            Query.Where(task => task.Id == taskId);
+
+            Query.Select(task => new GetTasksDTO
+            {
+                Id = task.Id,
+                Name = task.Name,
+                Description = task.Description,
+                PriorityType = task.PriorityType,
+                DueDate = task.DueDate,
+                AssignedUserId = task.AssignedUserId.ToString(),
+                AssignedUserFullName = task.AssignedUser != null ? task.AssignedUser.FullName : null
+            });
+        }
     }
 
 }
